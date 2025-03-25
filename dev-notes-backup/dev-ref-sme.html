@@ -1,0 +1,51 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"><!-- 私はＵＴＦ－８です -->
+<html><head><title>Windows Maximize Policy, or why do all my programs start with maximized windows?</title>
+    <link rel="stylesheet" type="text/css" href="../../complex2.css">
+    <meta name="Author" content="Ai4rei/AN">
+    <meta name="Keywords" lang="en" content="windows,maximize,policy,all,shell,shellexecute,shellexecuteex,start,launch,bug">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head><body>
+    <div id="wrapper">
+        <!-- Content -->
+        <div id="content">
+            <h1>Windows' Maximize Policy, or "Why do all my programs start with maximized windows?"</h1>
+            <ul>
+                <li><a href="#introduction">Introduction</a></li>
+                <li><a href="#temporaryFix">Temporary fix</a></li>
+                <li><a href="#permanentFix">Permanent fix</a></li>
+                <li><a href="#why">Why</a><ul>
+                    <li><a href="#whyShort">Short version</a></li>
+                    <li><a href="#whyLong">Long version</a></li>
+                </ul></li>
+            </ul>
+            <h2 id="introduction">Introduction</h2>
+            <p><a href="max01.png" class="thumbnail" style="float:right;"><img src="max01s.png" alt="Screenshot of a maximized dialog that is meant to not to be resized"></a>You use your new computer, everything works fine, until you use some application that starts with some small dialog. Even though the dialog <em>should</em> be small, it stretches over the whole desktop. There is no restore button, no taskbar, all you have is the close button and dialog controls. The following explains why this happens and what you can do about it.</p>
+            <h2 id="temporaryFix">Temporary fix</h2>
+            <p>To get the maximized window to its correct size, double-click the window caption, which does the same as the missing restore button.</p>
+            <h2 id="permanentFix">Permanent fix</h2>
+            <p>So far no native approach is known, as the behaviour seems to depend on, among others, the available RAM and screen size. I wrote a <a href="https://github.com/ai4rei/slems" rel="external">small tool</a> that can switch this behaviour on and off on supported platforms. You can either run it manually (GUI) or run it on every logon (<code>/setstate</code> parameter).</p>
+            <h2 id="why">Why</h2>
+            <div class="bentou with_toppings"><div>This is a work-in-progress, aka. I got lazy while investigating this further, so parts of the text may not be completely coherent.</div></div>
+            <h3 id="whyShort">Short version</h3>
+            <p>As of Windows 8, any application started with <code>ShellExecuteEx</code> (and derivates) with <code>nShowCmd</code> set to <code>SW_SHOWNORMAL</code> (1) is started with <code>SW_SHOWMAXIMIZED</code> (3) on certain hardware configurations. When an application starts, the first <code>ShowWindow</code> call ignores the <code>nShowCmd</code> argument and uses the value that the application was started with, <em>irrespective</em> of whether the first window supports that mode or not.</p>
+            <h3 id="whyLong">Long version</h3>
+            <p>During the ongoing tablet-hype, Windows 8 introduced tablet mode. In that mode all applications run maximized. In an probable effort to maintain compatibility and usability, the shell starts all applications as maximized, when the device is considered to be a low-end tablet. This means, that when <code>ShellExecuteEx</code> (and derivates) is called, then after a lot of preparation work, right before starting the application, the code calls <code>ApplyMaximizePolicy</code> (windows.storage.dll) on the <code>nShowCmd</code> value. If it is <code>SW_SHOWNORMAL</code> then it consults <code>ShouldLaunchEverythingMaximized</code>, which in turn consults <code>GetProp(GetShellWindow(), 0x464)</code>. If the result is <code>TRUE</code>, <code>nShowCmd</code> is updated to <code>SW_SHOWMAXIMIZED</code> and the application starts. Since the rule is, that the first <code>ShowWindow</code> call in an application ignores the <code>nShowCmd</code> argument and instead is shown according to the <code>STARTUPINFO</code> (initialized from <code>nShowCmd</code>), if the first window happens to be a fixed size dialog, it is maximized <em>regardless</em>.</p>
+            <p>The property is set in <code>CDesktopBrowser::_UpdateShouldLaunchEverythingMaximized</code> (shell32.dll), after checking if the system has 1 monitor (<code>SM_CMONITORS</code>), <code>Windows::Internal::DeviceCapabilitiesW::IsLowMemory</code> is true and <code>Windows::Internal::DeviceCapabilitiesW::IsScreenSizeRequirementMet(0)</code> is also true (SmallScreenEnhancements, <code>IsScreenPresentMatchingSizeCondition</code> true)</p>
+            <p>If the first window is a <code>MessageBox</code> dialog, it does not count towards the <code>ShowWindow</code> handling (it is explicitly exempted).</p>
+            <p>There is also an old, unrelated, hidden Explorer setting <code>Software\Microsoft\Windows\CurrentVersion\Explorer\MaximizeApps</code>, which changes SW_SHOWNORMAL</code>, SW_SHOWDEFAULT</code>, SW_SHOW</code> and SW_RESTORE</code> to SW_SHOWMAXIMIZED</code> in calls to ShellExecuteEx</code> (and derivates), but this is disabled by default.</p>
+            <div id="legal">
+                <p><a rel="license" href="https://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" src="../../../images/licenses/80x15by.png"></a><br>Copyright &copy; 2021 Ai4rei/AN - This work is licensed under the <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.</p>
+            </div>
+        </div>
+        <!-- Content End -->
+        <script type="text/javascript" defer="defer" src="../../showimg.sc"></script>
+        <script type="text/javascript">
+        <!--
+            window.onload = function(e)
+            {
+                createShowImage('../../busy-tetris.gif');
+            }
+        // -->
+        </script>
+    </div>
+</body></html>
