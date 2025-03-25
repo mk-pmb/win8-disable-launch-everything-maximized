@@ -6,6 +6,7 @@ You run this application at YOUR OWN RISK. This functionality may change in futu
 
 ## Details
 More detailed explanation is on: [http://nn.ai4rei.net/dev/ref/sme/](http://nn.ai4rei.net/dev/ref/sme/)
+([backup](https://mk-pmb.github.io/win8-disable-launch-everything-maximized/dev-notes-backup/dev-ref-sme.html))
 
 ## System Requirements
 * Windows 8+ 32-bit/64-bit
